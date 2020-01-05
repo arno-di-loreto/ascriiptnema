@@ -2,6 +2,7 @@
 ls -l
 # The \e[0mascriiptnema.sh\e[93m script plays any shell script
 cat ascriiptnema.sh
+# BLANK
 # 😱 It's working?
 # Let's try to change prompt for the next command
 # PROMPT:  \e[36m[invoking JQ] $\e[0m

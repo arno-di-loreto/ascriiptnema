@@ -13,6 +13,7 @@ prompt=$2
 # Reads the script file line by line
 REGEX_PROMPT="^\#[[:blank:]]*PROMPT:[[:blank:]]*"
 REGEX_DEFAULT_PROMPT="^\#[[:blank:]]*DEFAULT_PROMPT"
+REGEX_BLANK="^\#[[:blank:]]*BLANK"
 REGEX_COMMENT="^\#[[:blank:]]*"
 while IFS= read -r line
 do
@@ -24,6 +25,11 @@ do
   elif [[ $line =~ $REGEX_DEFAULT_PROMPT ]];
   then
     prompt=$defaultprompt
+  # A blank line without prompt
+  elif [[ $line =~ $REGEX_BLANK ]];
+  then
+    echo
+  # A comment
   elif [[ $line =~ $REGEX_COMMENT ]];
   then
     # Dummy prompt
