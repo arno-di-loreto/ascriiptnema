@@ -14,6 +14,7 @@ prompt=$2
 REGEX_PROMPT="^\#[[:blank:]]*PROMPT:[[:blank:]]*"
 REGEX_DEFAULT_PROMPT="^\#[[:blank:]]*DEFAULT_PROMPT"
 REGEX_BLANK="^\#[[:blank:]]*BLANK"
+REGEX_INVISIBLE="^\#[[:blank:]]*INVISIBLE:[[:blank:]]*"
 REGEX_COMMENT="^\#[[:blank:]]*"
 while IFS= read -r line
 do
@@ -29,6 +30,11 @@ do
   elif [[ $line =~ $REGEX_BLANK ]];
   then
     echo
+  # An invisible command
+  elif [[ $line =~ $REGEX_INVISIBLE ]];
+  then
+    command=`echo $line | sed -e 's/^\#[[:blank:]]*INVISIBLE:[[:blank:]]*//'`
+    eval $command
   # A comment
   elif [[ $line =~ $REGEX_COMMENT ]];
   then

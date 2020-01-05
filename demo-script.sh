@@ -11,3 +11,12 @@ head ascriiptnema.sh
 # DEFAULT_PROMPT
 # Now we're back to the default prompt
 echo "this is so great  🎉"
+# Let's try an INVISIBLE command
+# Here are the files before
+ls -l
+# INVISIBLE: touch file_created_by_INVISIBLE_command
+# Now you see me (file_created_by_INVISIBLE_command)
+ls -l
+# INVISIBLE: rm file_created_by_INVISIBLE_command
+# Now you don't (file_created_by_INVISIBLE_command)
+ls -l
