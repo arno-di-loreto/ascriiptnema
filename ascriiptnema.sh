@@ -13,25 +13,25 @@ prompt=$2
 # Reads the script file line by line
 REGEX_PROMPT="^\#[[:blank:]]*PROMPT:[[:blank:]]*"
 REGEX_DEFAULT_PROMPT="^\#[[:blank:]]*DEFAULT_PROMPT"
+REGEX_COMMENT="^\#[[:blank:]]*"
 while IFS= read -r line
 do
   # Changes prompt
   if [[ $line =~ $REGEX_PROMPT ]];
   then
     prompt=`echo $line | sed -e 's/^\#[[:blank:]]*PROMPT:[[:blank:]]*//'`
-    #prompt=`echo $line | sed -e 's/$REGEX_PROMPT//'`
   # Get back to default prompt
   elif [[ $line =~ $REGEX_DEFAULT_PROMPT ]];
   then
     prompt=$defaultprompt
-  elif [[ $line =~ ^\# ]];
+  elif [[ $line =~ $REGEX_COMMENT ]];
   then
     # Dummy prompt
     printf "$prompt"
-    # Lazy cleaning, a comment is supposed do be "# blah blah blah"
-    # So, just removing the first two characters
-    comment=${line:2}
-    # Printing in yellow without prompt
+    # Better cleaning, a comment is supposed do be "# blah blah blah"
+    # Did not succeed yet to use the regex var 🤔
+    comment=`echo $line | sed -e 's/^\#[[:blank:]]*//'`
+    # Printing in yellow
     # Got (unsolved) problem with coloring when using echo -e, that's why printf is used
     printf "\e[93m$comment\e[0m" | pv -qL $[10+(-2 + RANDOM%5)]
     echo
