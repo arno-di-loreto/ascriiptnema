@@ -20,3 +20,8 @@ ls -l
 # INVISIBLE: rm file_created_by_INVISIBLE_command
 # Now you don't (file_created_by_INVISIBLE_command)
 ls -l
+# A variable will be created by next invisible command
+# INVISIBLE: VARIABLE="some value"
+echo "something with [$VARIABLE]"
+# Comment with [$VARIABLE]
+# The variable can be used in commands or comments

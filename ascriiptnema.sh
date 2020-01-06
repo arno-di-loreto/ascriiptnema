@@ -16,6 +16,7 @@ REGEX_DEFAULT_PROMPT="^\#[[:blank:]]*DEFAULT_PROMPT"
 REGEX_BLANK="^\#[[:blank:]]*BLANK"
 REGEX_INVISIBLE="^\#[[:blank:]]*INVISIBLE:[[:blank:]]*"
 REGEX_COMMENT="^\#[[:blank:]]*"
+PV_COMMAND="pv -qL $[10+(-2 + RANDOM%5)]"
 while IFS= read -r line
 do
   # Changes prompt
@@ -43,16 +44,18 @@ do
     # Better cleaning, a comment is supposed do be "# blah blah blah"
     # Did not succeed yet to use the regex var 🤔
     comment=`echo $line | sed -e 's/^\#[[:blank:]]*//'`
+    # Evaluating comment (there may be some variables)
+    comment=`eval "echo \"$comment\""`
     # Printing in yellow
     # Got (unsolved) problem with coloring when using echo -e, that's why printf is used
-    printf "\e[93m$comment\e[0m" | pv -qL $[10+(-2 + RANDOM%5)]
+    printf "\e[93m$comment\e[0m" | $PV_COMMAND
     echo
   # A command line
   else
     # Dummy prompt
     printf "$prompt"
     # Simulates command typing
-    echo "$line" | pv -qL $[10+(-2 + RANDOM%5)]
+    echo "$line" | $PV_COMMAND
     # Actually executes it
     eval $line
   fi
