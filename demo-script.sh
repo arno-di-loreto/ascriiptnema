@@ -1,3 +1,4 @@
+# This is the beginning of the script file
 echo "will wait a second before showing output" # SLEEP: 3
 # This is a comment
 ls -l
@@ -7,6 +8,7 @@ cat ascriiptnema.sh
 # 😱 It's working?
 # Let's try to change prompt for the next command
 # PROMPT:  \e[36m[invoking JQ] $\e[0m
+# This is line 10
 head ascriiptnema.sh
 #         😍 That's even better! 
 # DEFAULT_PROMPT

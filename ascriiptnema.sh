@@ -1,4 +1,5 @@
 # Example: # ascriiptnema.sh demo-script.sh "\e[36m[default prompt] $\e[0m" 
+# Example: # ascriiptnema.sh demo-script.sh "\e[36m[default prompt] $\e[0m" 10
 
 # Trap CTRL+C to be able to exit before the actual end of the script
 trap ctrl_c INT
@@ -10,6 +11,13 @@ function ctrl_c()
 script=$1
 defaultprompt=$2
 prompt=$2
+linenumber=$3
+if [[ -z "$linenumber" ]]
+then
+  readcommand="cat $script"
+else
+  readcommand="tail -n+$linenumber $script"
+fi
 # Reads the script file line by line
 REGEX_PROMPT="^\#[[:blank:]]*PROMPT:[[:blank:]]*"
 REGEX_DEFAULT_PROMPT="^\#[[:blank:]]*DEFAULT_PROMPT"
@@ -76,4 +84,4 @@ do
     command=`echo $line | sed -e s/\\\\t/\\t/`
     eval $command
   fi
-done < "$script"
+done < <($readcommand)
