@@ -1,4 +1,4 @@
-# Example: # ascriiptnema.sh demo-script.sh "\e[36m[default prompt] $\e[0m"
+# Example: # ascriiptnema.sh demo-script.sh "\e[36m[default prompt] $\e[0m" 
 
 # Trap CTRL+C to be able to exit before the actual end of the script
 trap ctrl_c INT
@@ -54,9 +54,26 @@ do
   else
     # Dummy prompt
     printf "$prompt"
+    REGEX_SLEEP="[[:blank:]]*\#[[:blank:]]*SLEEP:.*$"
+    # Managing sleep before actually executing command
+    # in order to let user actually see the full command
+    unset sleep_time
+    if [[ $line =~ $REGEX_SLEEP ]]
+    then
+      command=`echo $line | sed -e s/[[:blank:]]*\#[[:blank:]]*SLEEP:.*$//`
+      sleep_time=`echo $line | sed -e s/^.*[[:blank:]]*\#[[:blank:]]*SLEEP:[[:blank:]]*//`
+    else
+      command=$line
+    fi
     # Simulates command typing
-    echo "$line" | $PV_COMMAND
+    echo "$command" | $PV_COMMAND
+    # Sleep before execution if requested
+    if [[ $sleep_time ]]
+    then
+      sleep $sleep_time
+    fi
     # Actually executes it
-    eval $line
+    command=`echo $line | sed -e s/\\\\t/\\t/`
+    eval $command
   fi
 done < "$script"

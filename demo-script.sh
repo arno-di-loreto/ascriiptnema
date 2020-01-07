@@ -1,3 +1,4 @@
+echo "will wait a second before showing output" # SLEEP: 3
 # This is a comment
 ls -l
 # The \e[0mascriiptnema.sh\e[93m script plays any shell script
