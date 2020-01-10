@@ -1,17 +1,55 @@
-# Example: # ascriiptnema.sh demo-script.sh "\e[36m[default prompt] $\e[0m" 
-# Example: # ascriiptnema.sh demo-script.sh "\e[36m[default prompt] $\e[0m" 10
+# Example: # ascriiptnema.sh demo-script.sh 
+# Example: # ascriiptnema.sh demo-script.sh 10
 
 # Trap CTRL+C to be able to exit before the actual end of the script
 trap ctrl_c INT
-function ctrl_c() 
-{
+function ctrl_c() {
   exit
 }
 
+# Print a dummy prompt [root in blue][section in pink] $ (in blue)
+print_prompt() {
+  printf "\e[36m[$1]\e[0m\e[95m[$2]\e[0m \e[36m$\e[0m"
+}
+
+# Print session's title in green
+print_title() {
+  printf "\\e[92m$1\\e[0m";echo
+}
+
+# Break comment line betwen words if longer than terminal width
+# Note fold do not like escape sequence at all
+print_comment () {
+  pc_prompt_root="$1"
+  pc_prompt_section="$2"
+  pc_prompt="[$pc_prompt_root][$pc_prompt_section] $"
+  pc_comment=$3
+  full_message="$pc_prompt$pc_comment"
+  full_message_length=${#full_message}
+  terminal_width=`tput cols`
+  print_prompt "$pc_prompt_root" "$pc_prompt_section"
+  if [[ $full_message_length -gt $terminal_width ]];
+  then
+    pc_prompt_length=${#pc_prompt}
+    first_line="${full_message:0:$terminal_width}"
+    first_line=`echo "$first_line" | sed -e s/[[:blank:]][a-zA-Z0-9]*$//`
+    first_line="${first_line:$pc_prompt_length}"
+    first_line_length=${#first_line}
+    next_line="${pc_comment:$first_line_length}"
+    printf "\e[93m"
+    printf "$first_line" | $PV_COMMAND
+    echo
+    printf "$next_line" | fold -w$terminal_width | $PV_COMMAND
+    printf "\e[0m"
+    echo
+  else
+    printf "\e[93m$pc_comment\e[0m" | $PV_COMMAND
+    echo
+  fi
+}
+
 script=$1
-defaultprompt=$2
-prompt=$2
-linenumber=$3
+linenumber=$2
 if [[ -z "$linenumber" ]]
 then
   readcommand="cat $script"
@@ -19,22 +57,28 @@ else
   readcommand="tail -n+$linenumber $script"
 fi
 # Reads the script file line by line
-REGEX_PROMPT="^\#[[:blank:]]*PROMPT:[[:blank:]]*"
-REGEX_DEFAULT_PROMPT="^\#[[:blank:]]*DEFAULT_PROMPT"
+REGEX_TITLE="^\#[[:blank:]]*TITLE:[[:blank:]]*"
+REGEX_ROOT="^\#[[:blank:]]*ROOT:[[:blank:]]*"
+REGEX_SECTION="^\#[[:blank:]]*SECTION:[[:blank:]]*"
 REGEX_BLANK="^\#[[:blank:]]*BLANK"
 REGEX_INVISIBLE="^\#[[:blank:]]*INVISIBLE:[[:blank:]]*"
 REGEX_COMMENT="^\#[[:blank:]]*"
 PV_COMMAND="pv -qL $[10+(-2 + RANDOM%5)]"
 while IFS= read -r line
 do
-  # Changes prompt
-  if [[ $line =~ $REGEX_PROMPT ]];
+  # Prints a title
+  if [[ $line =~ $REGEX_TITLE ]];
   then
-    prompt=`echo $line | sed -e 's/^\#[[:blank:]]*PROMPT:[[:blank:]]*//'`
-  # Get back to default prompt
-  elif [[ $line =~ $REGEX_DEFAULT_PROMPT ]];
+    title=`echo $line | sed -e 's/^\#[[:blank:]]*TITLE:[[:blank:]]*//'`
+    print_title "$title"
+  # Change root in prompt
+  elif [[ $line =~ $REGEX_ROOT ]];
   then
-    prompt=$defaultprompt
+    prompt_root=`echo $line | sed -e 's/^\#[[:blank:]]*ROOT:[[:blank:]]*//'`
+  # Changes section in prompt
+  elif [[ $line =~ $REGEX_SECTION ]];
+  then
+    prompt_section=`echo $line | sed -e 's/^\#[[:blank:]]*SECTION:[[:blank:]]*//'`
   # A blank line without prompt
   elif [[ $line =~ $REGEX_BLANK ]];
   then
@@ -47,21 +91,11 @@ do
   # A comment
   elif [[ $line =~ $REGEX_COMMENT ]];
   then
-    # Dummy prompt
-    printf "$prompt"
-    # Better cleaning, a comment is supposed do be "# blah blah blah"
     # Did not succeed yet to use the regex var 🤔
     comment=`echo $line | sed -e 's/^\#[[:blank:]]*//'`
-    # Evaluating comment (there may be some variables)
-    comment=`eval "echo \"$comment\""`
-    # Printing in yellow
-    # Got (unsolved) problem with coloring when using echo -e, that's why printf is used
-    printf "\e[93m$comment\e[0m" | $PV_COMMAND
-    echo
+    print_comment "$prompt_root" "$prompt_section" "$comment"
   # A command line
   else
-    # Dummy prompt
-    printf "$prompt"
     REGEX_SLEEP="[[:blank:]]*\#[[:blank:]]*SLEEP:.*$"
     # Managing sleep before actually executing command
     # in order to let user actually see the full command
@@ -73,9 +107,11 @@ do
     else
       command=$line
     fi
+    print_prompt "$prompt_root" "$prompt_section" 
     # Simulates command typing
     echo "$command" | $PV_COMMAND
     # Sleep before execution if requested
+    # Can be used to let viewers the time to actually read the command line
     if [[ $sleep_time ]]
     then
       sleep $sleep_time
