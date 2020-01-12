@@ -1,6 +1,11 @@
 # Example: # ascriiptnema.sh demo-script.sh 
 # Example: # ascriiptnema.sh demo-script.sh 10
 
+clear
+resize -s 24 80 &>/dev/null
+
+# echo -e not working in asciinema?
+
 # Trap CTRL+C to be able to exit before the actual end of the script
 trap ctrl_c INT
 function ctrl_c() {
@@ -23,7 +28,7 @@ print_comment () {
   pc_prompt_root="$1"
   pc_prompt_section="$2"
   pc_prompt="[$pc_prompt_root][$pc_prompt_section] $"
-  pc_comment=$3
+  pc_comment="# $3"
   full_message="$pc_prompt$pc_comment"
   full_message_length=${#full_message}
   terminal_width=`tput cols`
@@ -32,14 +37,14 @@ print_comment () {
   then
     pc_prompt_length=${#pc_prompt}
     first_line="${full_message:0:$terminal_width}"
-    first_line=`echo "$first_line" | sed -e s/[[:blank:]][a-zA-Z0-9]*$//`
+    first_line=`echo "$first_line" | sed -e 's/[[:space:]]*[[:graph:]]*$//'`
     first_line="${first_line:$pc_prompt_length}"
     first_line_length=${#first_line}
     next_line="${pc_comment:$first_line_length}"
     printf "\e[93m"
     printf "$first_line" | $PV_COMMAND
     echo
-    printf "$next_line" | fold -w$terminal_width | $PV_COMMAND
+    printf "$next_line" | fold -s -w$terminal_width | $PV_COMMAND
     printf "\e[0m"
     echo
   else
@@ -49,13 +54,13 @@ print_comment () {
 }
 
 script=$1
-linenumber=$2
-if [[ -z "$linenumber" ]]
+startlinenumber=$2
+if [[ -z $startlinenumber ]];
 then
-  readcommand="cat $script"
-else
-  readcommand="tail -n+$linenumber $script"
+  startlinenumber=1
 fi
+linenumber=0
+
 # Reads the script file line by line
 REGEX_TITLE="^\#[[:blank:]]*TITLE:[[:blank:]]*"
 REGEX_ROOT="^\#[[:blank:]]*ROOT:[[:blank:]]*"
@@ -66,6 +71,7 @@ REGEX_COMMENT="^\#[[:blank:]]*"
 PV_COMMAND="pv -qL $[10+(-2 + RANDOM%5)]"
 while IFS= read -r line
 do
+  linenumber=$((linenumber + 1))
   # Prints a title
   if [[ $line =~ $REGEX_TITLE ]];
   then
@@ -82,7 +88,10 @@ do
   # A blank line without prompt
   elif [[ $line =~ $REGEX_BLANK ]];
   then
-    echo
+    if [[ $linenumber -ge $startlinenumber ]];
+    then
+      echo
+    fi
   # An invisible command
   elif [[ $line =~ $REGEX_INVISIBLE ]];
   then
@@ -91,9 +100,12 @@ do
   # A comment
   elif [[ $line =~ $REGEX_COMMENT ]];
   then
-    # Did not succeed yet to use the regex var 🤔
-    comment=`echo $line | sed -e 's/^\#[[:blank:]]*//'`
-    print_comment "$prompt_root" "$prompt_section" "$comment"
+    if [[ $linenumber -ge $startlinenumber ]];
+    then
+      # Did not succeed yet to use the regex var 🤔
+      comment=`echo $line | sed -e 's/^\#[[:blank:]]*//'`
+      print_comment "$prompt_root" "$prompt_section" "$comment"
+    fi
   # A command line
   else
     REGEX_SLEEP="[[:blank:]]*\#[[:blank:]]*SLEEP:.*$"
@@ -107,17 +119,25 @@ do
     else
       command=$line
     fi
-    print_prompt "$prompt_root" "$prompt_section" 
-    # Simulates command typing
-    echo "$command" | $PV_COMMAND
-    # Sleep before execution if requested
-    # Can be used to let viewers the time to actually read the command line
-    if [[ $sleep_time ]]
+    if [[ $linenumber -ge $startlinenumber ]];
     then
-      sleep $sleep_time
-    fi
-    # Actually executes it
-    command=`echo $line | sed -e s/\\\\t/\\t/`
-    eval $command
+      print_prompt "$prompt_root" "$prompt_section" 
+      # Simulates command typing
+      printf "\e[2m$command\e[0m" | $PV_COMMAND
+      echo
+      # Sleep before execution if requested
+      # Can be used to let viewers the time to actually read the command line
+      if [[ $sleep_time ]]
+      then
+        sleep $sleep_time
+      fi
+      # Actually executes it
+      command=`echo $line | sed -e s/\\\\t/\\t/`
+      eval $command
+    else
+      command=`echo $line | sed -e s/\\\\t/\\t/`
+      command="$command &>/dev/null"
+      eval $command
+    fi;
   fi
-done < <($readcommand)
+done < "$script"
