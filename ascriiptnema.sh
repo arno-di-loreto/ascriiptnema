@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Example: # ascriiptnema.sh demo-script.sh 
 # Example: # ascriiptnema.sh demo-script.sh 10
 
@@ -75,16 +76,16 @@ do
   # Prints a title
   if [[ $line =~ $REGEX_TITLE ]];
   then
-    title=`echo $line | sed -e 's/^\#[[:blank:]]*TITLE:[[:blank:]]*//'`
+    title=`echo "$line" | sed -e 's/^\#[[:blank:]]*TITLE:[[:blank:]]*//'`
     print_title "$title"
   # Change root in prompt
   elif [[ $line =~ $REGEX_ROOT ]];
   then
-    prompt_root=`echo $line | sed -e 's/^\#[[:blank:]]*ROOT:[[:blank:]]*//'`
+    prompt_root=`echo "$line" | sed -e 's/^\#[[:blank:]]*ROOT:[[:blank:]]*//'`
   # Changes section in prompt
   elif [[ $line =~ $REGEX_SECTION ]];
   then
-    prompt_section=`echo $line | sed -e 's/^\#[[:blank:]]*SECTION:[[:blank:]]*//'`
+    prompt_section=`echo "$line" | sed -e 's/^\#[[:blank:]]*SECTION:[[:blank:]]*//'`
   # A blank line without prompt
   elif [[ $line =~ $REGEX_BLANK ]];
   then
@@ -95,7 +96,7 @@ do
   # An invisible command
   elif [[ $line =~ $REGEX_INVISIBLE ]];
   then
-    command=`echo $line | sed -e 's/^\#[[:blank:]]*INVISIBLE:[[:blank:]]*//'`
+    command=`echo "$line" | sed -e 's/^\#[[:blank:]]*INVISIBLE:[[:blank:]]*//'`
     eval $command
   # A comment
   elif [[ $line =~ $REGEX_COMMENT ]];
@@ -103,7 +104,7 @@ do
     if [[ $linenumber -ge $startlinenumber ]];
     then
       # Did not succeed yet to use the regex var 🤔
-      comment=`echo $line | sed -e 's/^\#[[:blank:]]*//'`
+      comment=`echo "$line" | sed -e 's/^\#[[:blank:]]*//'`
       print_comment "$prompt_root" "$prompt_section" "$comment"
     fi
   # A command line
@@ -114,8 +115,8 @@ do
     unset sleep_time
     if [[ $line =~ $REGEX_SLEEP ]]
     then
-      command=`echo $line | sed -e s/[[:blank:]]*\#[[:blank:]]*SLEEP:.*$//`
-      sleep_time=`echo $line | sed -e s/^.*[[:blank:]]*\#[[:blank:]]*SLEEP:[[:blank:]]*//`
+      command=`echo "$line" | sed -e s/[[:blank:]]*\#[[:blank:]]*SLEEP:.*$//`
+      sleep_time=`echo "$line" | sed -e s/^.*[[:blank:]]*\#[[:blank:]]*SLEEP:[[:blank:]]*//`
     else
       command=$line
     fi
@@ -123,8 +124,9 @@ do
     then
       print_prompt "$prompt_root" "$prompt_section" 
       # Simulates command typing
-      printf "\e[2m$command\e[0m" | $PV_COMMAND
-      echo
+      printf "\e[2m"
+      echo "$command" | $PV_COMMAND
+      printf "\e[0m"
       # Sleep before execution if requested
       # Can be used to let viewers the time to actually read the command line
       if [[ $sleep_time ]]
@@ -132,10 +134,8 @@ do
         sleep $sleep_time
       fi
       # Actually executes it
-      command=`echo $line | sed -e s/\\\\t/\\t/`
       eval $command
     else
-      command=`echo $line | sed -e s/\\\\t/\\t/`
       command="$command &>/dev/null"
       eval $command
     fi;
