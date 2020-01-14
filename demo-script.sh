@@ -1,4 +1,7 @@
-# This is the beginning of the script file
+# TITLE: This is a demo script to be used with ascriiptnema
+# ROOT: apihandyman.io
+# SECTION: HTTP methods 1
+# It reuses the  filters we have seen in list-paths.jq but now it gets a level deeper and creates an array of all of the paths properties by putting the filters chain inside brackets. Let's decompose it
 echo "will wait a second before showing output" # SLEEP: 3
 # This is a comment
 ls -l
