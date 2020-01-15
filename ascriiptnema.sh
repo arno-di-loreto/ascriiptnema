@@ -67,11 +67,13 @@ REGEX_TITLE="^\#[[:blank:]]*TITLE:[[:blank:]]*"
 REGEX_ROOT="^\#[[:blank:]]*ROOT:[[:blank:]]*"
 REGEX_SECTION="^\#[[:blank:]]*SECTION:[[:blank:]]*"
 REGEX_BLANK="^\#[[:blank:]]*BLANK"
-REGEX_INVISIBLE="^\#[[:blank:]]*INVISIBLE:[[:blank:]]*"
 REGEX_COMMENT="^\#[[:blank:]]*"
+REGEX_INVISIBLE="[[:blank:]]*\#[[:blank:]]*INVISIBLE.*$"
+REGEX_SLEEP="[[:blank:]]*\#[[:blank:]]*SLEEP:.*$"
 PV_COMMAND="pv -qL $[10+(-2 + RANDOM%5)]"
 while IFS= read -r line
 do
+  unset invisible
   linenumber=$((linenumber + 1))
   # Prints a title
   if [[ $line =~ $REGEX_TITLE ]];
@@ -96,7 +98,7 @@ do
   # An invisible command
   elif [[ $line =~ $REGEX_INVISIBLE ]];
   then
-    command=`echo "$line" | sed -e 's/^\#[[:blank:]]*INVISIBLE:[[:blank:]]*//'`
+    command=`echo "$line" | sed -e s/[[:blank:]]*\#[[:blank:]]*INVISIBLE.*$//`
     eval $command
   # A comment
   elif [[ $line =~ $REGEX_COMMENT ]];
@@ -109,7 +111,6 @@ do
     fi
   # A command line
   else
-    REGEX_SLEEP="[[:blank:]]*\#[[:blank:]]*SLEEP:.*$"
     # Managing sleep before actually executing command
     # in order to let user actually see the full command
     unset sleep_time
